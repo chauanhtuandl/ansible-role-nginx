@@ -1,5 +1,18 @@
 ---
-root_group: root
+yum_packages_name:
+  - yum-utils
+
+yum_repository:
+  - name: Nginx-Stable
+    baseurl: http://nginx.org/packages/centos/$releasever/$basearch/
+    repo_gpgcheck: false
+    enabled: true
+    gpgcheck: true
+    gpgkey: https://nginx.org/keys/nginx_signing.key
+    sslverify: false
+    sslcacert:
+
+nginx_root_group: root
 nginx_conf_path: /etc/nginx/conf.d
 nginx_conf_file_path: /etc/nginx/nginx.conf
 nginx_mime_file_path: /etc/nginx/mime.types

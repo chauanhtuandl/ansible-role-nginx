@@ -1,81 +1,80 @@
-user  {{ nginx_user }};
+# For more information on configuration, see:
+#   * Official English Documentation: http://nginx.org/en/docs/
 
-error_log  {{ nginx_error_log }};
-pid        {{ nginx_pidfile }};
+user {{ nginx_user }};
+
+error_log {{ nginx_error_log }};
+pid {{ nginx_pidfile }};
 
 {% block worker %}
 worker_processes  {{ nginx_worker_processes }};
 {% endblock %}
 
-{% if nginx_extra_conf_options %}
-{{ nginx_extra_conf_options }}
-{% endif %}
-
 {% block events %}
 events {
-    worker_connections  {{ nginx_worker_connections }};
+    worker_connections {{ nginx_worker_connections }};
+
+    # optmized to serve many clients with each thread, essential for linux
+    use {{ nginx_use }};
+
+    # accept as many connections as possible, may flood worker connections if set too low
     multi_accept {{ nginx_multi_accept }};
 }
 {% endblock %}
 
+{% block http %}
 http {
-    {% block http_begin %}{% endblock %}
-
-{% block http_basic %}
     include       {{ nginx_mime_file_path }};
-    default_type  application/octet-stream;
+    default_type  {{ nginx_default_type }};
 
-    server_names_hash_bucket_size {{ nginx_server_names_hash_bucket_size }};
-
-    client_max_body_size {{ nginx_client_max_body_size }};
-
-    log_format  main  {{ nginx_log_format|indent(23) }};
+    log_format  main   {{ nginx_log_format|indent(23) }};
 
     access_log  {{ nginx_access_log }};
 
-    sendfile        {{ nginx_sendfile }};
-    tcp_nopush      {{ nginx_tcp_nopush }};
-    tcp_nodelay     {{ nginx_tcp_nodelay }};
+    sendfile            {{ nginx_sendfile }};
+    tcp_nopush          {{ nginx_tcp_nopush }};
+    tcp_nodelay         {{ nginx_tcp_nodelay }};
 
-    keepalive_timeout  {{ nginx_keepalive_timeout }};
-    keepalive_requests {{ nginx_keepalive_requests }};
+    keepalive_timeout   {{ nginx_keepalive_timeout }};
+    keepalive_requests  {{ nginx_keepalive_requests }};
+    types_hash_max_size {{ nginx_types_hash_max_size }};
+
+    open_file_cache          {{ nginx_open_file_cache }}; 
+    open_file_cache_valid    {{ nginx_open_file_cache_valid }}; 
+    open_file_cache_min_uses {{ nginx_open_file_cache_min_uses }};
+    open_file_cache_errors   {{ nginx_open_file_cache_errors }};
+
+    gzip            {{ nginx_gzip }};
+    gzip_min_length {{ nginx_gzip_min_length }};
+    gzip_types      {{ nginx_gzip_types }};
 
     server_tokens {{ nginx_server_tokens }};
-{% if nginx_proxy_cache_path %}
-    proxy_cache_path {{ nginx_proxy_cache_path }};
-{% endif %}
-{% endblock %}
+    {% block sss %}
+    {% if nginx_server_names_hash_bucket_size %}
+    server_names_hash_bucket_size {{ nginx_server_names_hash_bucket_size }};
+    {% endif %}
+    {% endblock %}
 
-{% block http_gzip %}
-    # gzip on;
-{% endblock %}
+    client_max_body_size {{ nginx_client_max_body_size }};
+    # Load modular configuration files from the /etc/nginx/conf.d directory.
+    # See http://nginx.org/en/docs/ngx_core_module.html#include
+    # for more information.
 
-{% if nginx_extra_http_options %}
-    {{ nginx_extra_http_options|indent(4, False) }}
-{% endif %}
-
-{% block http_upstream %}
-{% for upstream in nginx_upstreams %}
-    upstream {{ upstream.name }} {
-{% if upstream.strategy is defined %}
-        {{ upstream.strategy }};
-{% endif %}
-{% for server in upstream.servers %}
-        server {{ server }};
-{% endfor %}
-{% if upstream.keepalive is defined %}
-        keepalive {{ upstream.keepalive }};
-{% endif %}
-    }
-{% endfor %}
-{% endblock %}
-
-{% block http_includes %}
     include {{ nginx_conf_path }}/*.conf;
-{% if nginx_conf_path != nginx_vhost_path %}
+    {% if nginx_conf_path != nginx_vhost_path %}
     include {{ nginx_vhost_path }}/*;
-{% endif %}
-{% endblock %}
+    {% endif %}
 
-    {% block http_end %}{% endblock %}
+    {% if nginx_proxy_cache_path %}
+    proxy_cache_path {{ nginx_proxy_cache_path }};
+    {% endif %}
+
+    {% if nginx_extra_http_options %}
+    {{ nginx_extra_http_options|indent(4, False) }}
+    {% endif %}
+
+    {% if nginx_extra_conf_options %}
+    {{ nginx_extra_conf_options }}
+    {% endif %}
 }
+{% endblock %}

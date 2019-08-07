@@ -1,19 +1,20 @@
 {% block http_upstream %}
-{% if item.upstreams_state %}
-upstream {{ item.upstream_name }} {
-    {% if item.upstream_strategy is defined and item.upstream_strategy %}
-    {{ item.upstream_strategy }};
+{% if item.nginx_upstreams is defined %}
+{% for upstream in item.nginx_upstreams %}
+    upstream {{ upstream.name }} {
+    {% if upstream.strategy is defined %}
+    {{ upstream.strategy }};
     {% endif %}
-    {% for server in item.servers %}
+    {% for server in upstream.servers %}
     server {{ server }};
     {% endfor %}
-    {% if item.upstream_keepalive is defined and item.upstream_keepalive %}
-    keepalive {{ item.upstream_keepalive }};
+    {% if upstream.keepalive is defined %}
+    keepalive {{ upstream.keepalive }};
     {% endif %}
-}
+    }
+{% endfor %}
 {% endif %}
 {% endblock %}
-
 
 {% block server_redirect %}
 {% if item.server_name_redirect is defined and item.server_name_redirect%}
@@ -26,6 +27,21 @@ server {
 {% endblock %}
 
 server {
+       listen	   80;
+        proxy_redirect           off;
+        proxy_set_header         X-Real-IP $remote_addr;
+        proxy_set_header         X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header         Host $http_host;
+
+        location / {
+            proxy_pass http://backends;
+        }
+     }
+
+
+
+
+
     {% block server %}
     {% block server_basic -%}
 	listen       {{ item.listen | default('80') }};
@@ -64,18 +80,10 @@ server {
     {{ item.hsts }};
     {% endif %}
 
-    {% if item.locations is defined and item.locations and item.upstreams_state is sameas false  %}
+    {% if item.locations is defined and item.locations %}
     {%+ for item in item.locations -%}
         location {{ item.location }}
     {%+ endfor %}
-    {% else %}
-    location / {
-            proxy_set_header Host $http_host;
-            proxy_set_header X-Forwarded-Host $host;
-            proxy_set_header X-Forwarded-Server $host;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_pass http://{{ item.upstream_name }};
-    }
     {% endif %}
 
     {% if item.error_pages is defined and item.error_pages %}

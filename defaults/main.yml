@@ -1,53 +1,68 @@
 ---
-# Used only for Debian/Ubuntu installation, as the -t option for apt.
-nginx_default_release: ""
+packages_name: nginx
+service_name: nginx
+service_service_state: restarted
+service_service_enabled: true
 
 # Used only for Redhat installation, enables source Nginx repo.
 nginx_yum_repo_enabled: true
 
-# Use the official Nginx PPA for Ubuntu, and the version to use if so.
-nginx_ppa_use: false
-nginx_ppa_version: stable
-
-# The name of the nginx package to install.
-nginx_package_name: "nginx"
 
 nginx_service_state: started
 nginx_service_enabled: true
 
-nginx_conf_template: "nginx.conf.j2"
-nginx_vhost_template: "vhost.j2"
+nginx_conf_template: 'nginx.conf.j2'
+nginx_vhost_template: 'vhost.j2'
 
 nginx_worker_processes: >-
   "{{ ansible_processor_vcpus | default(ansible_processor_count) }}"
-nginx_worker_connections: "1024"
-nginx_multi_accept: "off"
+nginx_worker_connections: '1024'
+nginx_use: 'epoll'
+nginx_multi_accept: 'on'
 
-nginx_error_log: "/var/log/nginx/error.log warn"
-nginx_access_log: "/var/log/nginx/access.log main buffer=16k flush=2m"
+nginx_default_type: 'application/octet-stream'
 
-nginx_sendfile: "on"
-nginx_tcp_nopush: "on"
-nginx_tcp_nodelay: "on"
+nginx_error_log: '/var/log/nginx/error.log warn'
+nginx_access_log: '/var/log/nginx/access.log main buffer=16k flush=2m'
+nginx_log_format: |-
+  '$remote_addr - $remote_user [$time_local] "$request"'
+  '$status $body_bytes_sent "$http_referer"'
+  '"$http_user_agent" "$http_x_forwarded_for"'
 
-nginx_keepalive_timeout: "65"
-nginx_keepalive_requests: "100"
+nginx_sendfile: 'on'
+nginx_tcp_nopush: 'on'
+nginx_tcp_nodelay: 'on'
 
-nginx_server_tokens: "on"
+nginx_keepalive_timeout: '65'
+nginx_keepalive_requests: '100'
+nginx_types_hash_max_size: '2048'
 
-nginx_client_max_body_size: "64m"
+nginx_open_file_cache: 'max=200000 inactive=20s'
+nginx_open_file_cache_valid: '30s'
+nginx_open_file_cache_min_uses: '2'
+nginx_open_file_cache_errors: 'on'
 
-nginx_server_names_hash_bucket_size: "64"
+nginx_gzip: 'on'
+nginx_gzip_min_length: '1024'
+nginx_gzip_types: >-
+  'text/plain text/css
+  text/xml text/javascript'
 
-nginx_proxy_cache_path: ""
+nginx_server_tokens: 'on'
 
-nginx_extra_conf_options: ""
+nginx_client_max_body_size: '64m'
+
+nginx_server_names_hash_bucket_size: '64'
+
+nginx_proxy_cache_path: ''
+
+nginx_extra_conf_options: ''
 # Example extra main options, used within the main nginx's context:
 #   nginx_extra_conf_options: |
 #     env VARIABLE;
 #     include /etc/nginx/main.d/*.conf;
 
-nginx_extra_http_options: ""
+nginx_extra_http_options: ''
 # Example extra http options, printed inside the main server http config:
 #    nginx_extra_http_options: |
 #      proxy_buffering    off;
@@ -57,24 +72,88 @@ nginx_extra_http_options: ""
 #      proxy_set_header   Host $http_host;
 
 nginx_remove_default_vhost: false
-nginx_vhosts: []
-# Example vhost below, showing all available options:
-# - listen: "80" # default: "80"
-#   server_name: "example.com" # default: N/A
-#   root: "/var/www/example.com" # default: N/A
-#   index: "index.html index.htm" # default: "index.html index.htm"
-#   filename: "example.com.conf" # Can be used to set the vhost filename.
-#
-#   # Properties that are only added if defined:
-#   server_name_redirect: "www.example.com" # default: N/A
-#   error_page: ""
-#   access_log: ""
-#   error_log: ""
-#   extra_parameters: "" # Can be used to add extra config blocks (multiline).
-#   template: "" # Can be used to override the `nginx_vhost_template` per host.
-#   state: "absent" # To remove the vhost configuration.
 
-nginx_upstreams: []
+nginx_vhosts:
+  - filename: 'example.com.conf'
+    state: 'sabsent'
+    template: 'vhost.j2'
+    listen: '80'
+    ssl_state: false
+    listen_ssl: "443 ssl http2"
+    server_name: "example.com"
+    root: '/var/www/example.com'
+    index: 'index.html index.htm'
+
+    server_name_redirect: 'www.example.com'
+    extra_parameters: ''
+
+    upstreams_state: true
+    upstream_name: example
+    upstream_strategy: "ip_hash"
+    upstream_keepalive: 16
+    servers:
+      - "127.0.0.1"
+      - "localhost weight=5"
+
+    ssl_protocols: 'TLSv1.1 TLSv1.2 TLSv1.3'
+    ssl_prefer_server_ciphers: 'on'
+    ssl_ciphers: "ECDHE+RSAGCM:ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:\
+      ECDH+AES128:DH+AES:!aNULL!eNull:!EXPORT:!DES:!3DES:!MD5:!DSS"
+    ssl_certificate: '/etc/pki/tls/certs/vietcredit.com.vn/vietcredit.com.vn.crt'
+    ssl_certificate_key: '/etc/pki/tls/certs/vietcredit.com.vn/vietcredit.com.vn.key'
+    ssl_session_cache: 'shared:SSL:50m'
+    ssl_session_timeout: '1d'
+    hsts: 'add_header Strict-Transport-Security: "max-age=31536000" always'
+
+    return: '301 https://www.example.com$request_uri'
+
+    locations:
+      - location: |-
+          / {
+                  return 301 https://www.example.com$request_uri;
+              }
+#      - location: |-
+#          / {
+#              return 302 https://www.example.com$request_uri;
+#              }
+
+    error_pages:
+      - error_page: |-
+          404 /404.html;
+              location = /40x.html {
+              }
+      - error_page: |-
+          500 502 503 504 /50x.html;
+              location = /50x.html {
+              }
+
+    access_log: ''
+    error_log: ''
+
+# # Load configuration files for the default server block.
+# localtions:
+#   - location: '/{
+#             try_files $uri $uri/ /index.php?$args
+#     }'
+#   - location: '~ \.php$ {
+#           try_files $uri =404;
+#           fastcgi_split_path_info ^(.+\.php)(/.+)$;
+#           fastcgi_pass 127.0.0.1:9000;
+#           fastcgi_index index.php;
+#           fastcgi_param  SCRIPT_FILENAME    /usr/share/zabbix$fastcgi_script_name;
+#           include fastcgi_params;
+#     }'
+
+nginx_upstreams:
+  - filename: 'example.com.conf'
+    state: 'sabsent'
+    template: 'proxy.j2'
+    listen: '80'
+    ssl_state: false
+    listen_ssl: "443 ssl http2"
+    server_name: "example.com"
+    root: '/var/www/example.com'
+    index: 'index.html index.htm'
 # - name: myapp1
 #   strategy: "ip_hash" # "least_conn", etc.
 #   keepalive: 16 # optional
@@ -83,8 +162,3 @@ nginx_upstreams: []
 #     "srv2.example.com weight=3",
 #     "srv3.example.com"
 #   }
-
-nginx_log_format: |-
-  '$remote_addr - $remote_user [$time_local] "$request" '
-  '$status $body_bytes_sent "$http_referer" '
-  '"$http_user_agent" "$http_x_forwarded_for"'

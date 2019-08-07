@@ -1,10 +1,25 @@
 ---
-- name: Update apt cache.
-  apt: update_cache=yes cache_valid_time=86400
-  changed_when: false
-
-- name: Ensure nginx is installed.
+- name: Ensure package idependent are installed.
   apt:
-    name: "{{ nginx_package_name }}"
+    name: "{{ apt_packages_name }}"
+    update_cache: true
     state: present
-    default_release: "{{ nginx_default_release }}"
+  when: apt_packages_name is defined
+
+# - name: Add an Apt signing key for {{ service_name }}
+#   apt_key:
+#     url: "{{ apt_gpg_key }}"
+#     state: present
+#   when: apt_gpg_key is defined
+
+# - name: Add {{ service_name }} repository
+#   apt_repository:
+#     repo: deb {{ apt_repository }}
+#     state: present
+#   when: apt_repository is defined
+
+- name: Ensure {{ service_name }} are installed.
+  apt:
+    name: "{{ packages_name }}"
+    update_cache: true
+    state: present

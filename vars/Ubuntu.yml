@@ -3,8 +3,9 @@ apt_packages_name:
   - python-apt
   - apt-transport-https
   - gnupg2
+  - curl
   - ca-certificates
-apt_repository: 'http://nginx.org/packages/debian `lsb_release -cs` nginx'
+apt_repository: 'http://nginx.org/packages/ubuntu `lsb_release -cs` nginx'
 apt_gpg_key: 'https://nginx.org/keys/nginx_signing.key'
 
 nginx_root_group: root

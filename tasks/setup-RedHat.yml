@@ -1,14 +1,27 @@
 ---
-- name: Enable nginx repo.
-  template:
-    src: nginx.repo.j2
-    dest: /etc/yum.repos.d/nginx.repo
-    owner: root
-    group: "{{ root_group }}"
-    mode: 0644
-  when: nginx_yum_repo_enabled | bool
+- name: Add {{ service_name }} repository
+  yum_repository:
+    name: "{{ item.name }}"
+    description: "{{ item.name }} YUM repo"
+    baseurl: "{{ item.baseurl }}"
+    repo_gpgcheck: "{{ item.repo_gpgcheck | default(omit) }}"
+    enabled: "{{ item.enabled | default(omit) }}"
+    gpgcheck: "{{ item.gpgcheck | default(omit) }}"
+    gpgkey: "{{ item.gpgkey | default(omit) }}"
+    sslverify: "{{ item.sslverify | default(omit) }}"
+    sslcacert: "{{ item.sslcacert | default(omit) }}"
+  with_items: "{{ yum_repository }}"
+  when: yum_repository is defined
 
-- name: Ensure nginx is installed.
-  package:
-    name: "{{ nginx_package_name }}"
+- name: Ensure package idependent are installed.
+  yum:
+    name: "{{ yum_packages_name }}"
+    update_cache: true
+    state: present
+  when: yum_packages_name is defined
+
+- name: Ensure {{ service_name }} are installed.
+  yum:
+    name: "{{ packages_name }}"
+    update_cache: true
     state: present
