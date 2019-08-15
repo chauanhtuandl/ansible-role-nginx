@@ -108,10 +108,26 @@ nginx_vhosts:
     return: '301 https://www.example.com$request_uri'
 
     locations:
-      - location: |-
-          / {
-                  return 301 https://www.example.com$request_uri;
+      # - location: |-
+      #     / {
+      #             return 301 https://www.example.com$request_uri;
+      #         }
+
+      - location: >-
+          /{
+                try_files $uri $uri/ /index.php?$args
               }
+      - location: '~ \.php$ {
+              try_files $uri =404;
+              fastcgi_split_path_info ^(.+\.php)(/.+)$;
+              fastcgi_pass 127.0.0.1:9000;
+              fastcgi_index index.php;
+              fastcgi_param  SCRIPT_FILENAME    /usr/share/zabbix$fastcgi_script_name;
+              include fastcgi_params;
+        }'
+
+
+
 #      - location: |-
 #          / {
 #              return 302 https://www.example.com$request_uri;
@@ -147,18 +163,70 @@ nginx_vhosts:
 nginx_upstreams:
   - filename: 'example.com.conf'
     state: 'sabsent'
-    template: 'proxy.j2'
+    template: 'vhost.j2'
     listen: '80'
     ssl_state: false
     listen_ssl: "443 ssl http2"
     server_name: "example.com"
     root: '/var/www/example.com'
     index: 'index.html index.htm'
-# - name: myapp1
-#   strategy: "ip_hash" # "least_conn", etc.
-#   keepalive: 16 # optional
-#   servers: {
-#     "srv1.example.com",
-#     "srv2.example.com weight=3",
-#     "srv3.example.com"
-#   }
+
+    server_name_redirect: 'www.example.com'
+    extra_parameters: ''
+
+    upstreams_state: true
+    upstream_name: example
+    upstream_strategy: "ip_hash"
+    upstream_keepalive: 16
+    servers:
+      - "127.0.0.1"
+      - "localhost weight=5"
+
+    ssl_protocols: 'TLSv1.1 TLSv1.2 TLSv1.3'
+    ssl_prefer_server_ciphers: 'on'
+    ssl_ciphers: "ECDHE+RSAGCM:ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:\
+      ECDH+AES128:DH+AES:!aNULL!eNull:!EXPORT:!DES:!3DES:!MD5:!DSS"
+    ssl_certificate: '/etc/pki/tls/certs/vietcredit.com.vn/vietcredit.com.vn.crt'
+    ssl_certificate_key: '/etc/pki/tls/certs/vietcredit.com.vn/vietcredit.com.vn.key'
+    ssl_session_cache: 'shared:SSL:50m'
+    ssl_session_timeout: '1d'
+    hsts: 'add_header Strict-Transport-Security: "max-age=31536000" always'
+
+    return: '301 https://www.example.com$request_uri'
+
+    locations:
+      - location: |-
+          / {
+                  return 301 https://www.example.com$request_uri;
+              }
+#      - location: |-
+#          / {
+#              return 302 https://www.example.com$request_uri;
+#              }
+
+    error_pages:
+      - error_page: |-
+          404 /404.html;
+              location = /40x.html {
+              }
+      - error_page: |-
+          500 502 503 504 /50x.html;
+              location = /50x.html {
+              }
+
+    access_log: ''
+    error_log: ''
+
+# # Load configuration files for the default server block.
+# localtions:
+#   - location: '/{
+#             try_files $uri $uri/ /index.php?$args
+#     }'
+#   - location: '~ \.php$ {
+#           try_files $uri =404;
+#           fastcgi_split_path_info ^(.+\.php)(/.+)$;
+#           fastcgi_pass 127.0.0.1:9000;
+#           fastcgi_index index.php;
+#           fastcgi_param  SCRIPT_FILENAME    /usr/share/zabbix$fastcgi_script_name;
+#           include fastcgi_params;
+#     }'
