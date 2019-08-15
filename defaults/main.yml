@@ -86,13 +86,13 @@ nginx_vhosts:
 
     server_name_redirect: 'www.example.com'
     extra_parameters: |
-      ssl_protocols TLSv1.1 TLSv1.2 TLSv1.3;
-      ssl_prefer_server_ciphers on;
-      ssl_ciphers ECDHE+RSAGCM:ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:!aNULL!eNull:!EXPORT:!DES:!3DES:!MD5:!DSS;
-      ssl_certificate /etc/pki/tls/certs/vietcredit.com.vn/vietcredit.com.vn.crt;
-      ssl_certificate_key /etc/pki/tls/certs/vietcredit.com.vn/vietcredit.com.vn.key;
-      ssl_session_cache shared:SSL:50m;
-      ssl_session_timeout 1d;
+      # ssl_protocols TLSv1.1 TLSv1.2 TLSv1.3;
+      # ssl_prefer_server_ciphers on;
+      # ssl_ciphers ECDHE+RSAGCM:ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:!aNULL!eNull:!EXPORT:!DES:!3DES:!MD5:!DSS;
+      # ssl_certificate /etc/pki/tls/certs/vietcredit.com.vn/vietcredit.com.vn.crt;
+      # ssl_certificate_key /etc/pki/tls/certs/vietcredit.com.vn/vietcredit.com.vn.key;
+      # ssl_session_cache shared:SSL:50m;
+      # ssl_session_timeout 1d;
 
       location /{
               try_files $uri $uri/ /index.php?$args;
@@ -144,13 +144,13 @@ nginx_upstreams:
       - "localhost weight=5"
 
     extra_parameters: |
-      ssl_protocols TLSv1.1 TLSv1.2 TLSv1.3;
-      ssl_prefer_server_ciphers on;
-      ssl_ciphers ECDHE+RSAGCM:ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:!aNULL!eNull:!EXPORT:!DES:!3DES:!MD5:!DSS;
-      ssl_certificate /etc/pki/tls/certs/vietcredit.com.vn/vietcredit.com.vn.crt;
-      ssl_certificate_key /etc/pki/tls/certs/vietcredit.com.vn/vietcredit.com.vn.key;
-      ssl_session_cache shared:SSL:50m;
-      ssl_session_timeout 1d;
+      # ssl_protocols TLSv1.1 TLSv1.2 TLSv1.3;
+      # ssl_prefer_server_ciphers on;
+      # ssl_ciphers ECDHE+RSAGCM:ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:!aNULL!eNull:!EXPORT:!DES:!3DES:!MD5:!DSS;
+      # ssl_certificate /etc/pki/tls/certs/vietcredit.com.vn/vietcredit.com.vn.crt;
+      # ssl_certificate_key /etc/pki/tls/certs/vietcredit.com.vn/vietcredit.com.vn.key;
+      # ssl_session_cache shared:SSL:50m;
+      # ssl_session_timeout 1d;
 
       location / {
               proxy_set_header Host $http_host;
