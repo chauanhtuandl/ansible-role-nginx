@@ -3,9 +3,9 @@ dependencies: []
 
 galaxy_info:
   role_name: nginx
-  author: none
+  author: ansible-role
   description: Nginx installation for Linux, FreeBSD and OpenBSD.
-  company: "none"
+  company: "ansible-role"
   license: "license (BSD, MIT)"
   min_ansible_version: 2.4
   platforms:

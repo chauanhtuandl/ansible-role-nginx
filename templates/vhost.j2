@@ -1,20 +1,3 @@
-{% block http_upstream %}
-{% if item.upstreams_state %}
-upstream {{ item.upstream_name }} {
-    {% if item.upstream_strategy is defined and item.upstream_strategy %}
-    {{ item.upstream_strategy }};
-    {% endif %}
-    {% for server in item.servers %}
-    server {{ server }};
-    {% endfor %}
-    {% if item.upstream_keepalive is defined and item.upstream_keepalive %}
-    keepalive {{ item.upstream_keepalive }};
-    {% endif %}
-}
-{% endif %}
-{% endblock %}
-
-
 {% block server_redirect %}
 {% if item.server_name_redirect is defined and item.server_name_redirect%}
 server {
@@ -47,49 +30,23 @@ server {
     access_log  /var/log/nginx/{{ item.server_name.split(' ')[0] }}.access;
     error_log   /var/log/nginx/{{ item.server_name.split(' ')[0] }}.error error;
 
-    {% block ssl -%}
-    {% if item.ssl_state  is defined and item.ssl_state %}
-    ssl_protocols {{ item.ssl_protocols }};
-    ssl_prefer_server_ciphers {{ item.ssl_prefer_server_ciphers }};
-    ssl_ciphers {{ item.ssl_ciphers }};
-    ssl_certificate      {{ item.ssl_certificate }};
-    ssl_certificate_key  {{ item.ssl_certificate_key }};
-    ssl_session_cache {{ item.ssl_session_cache }};
-    ssl_session_timeout {{ item.ssl_session_timeout }};
+    {% if item.extra_parameters is defined and item.extra_parameters %}
+    {{ item.extra_parameters|indent(4) }}
     {% endif %}
-    {% endblock %}
 
     {% if item.hsts is defined and item.hsts %}
     # Enable HSTS
     {{ item.hsts }};
     {% endif %}
-
-    {% if item.locations is defined and item.locations and item.upstreams_state is sameas false  %}
-    {%+ for item in item.locations -%}
-        location {{ item.location }}
-    {%+ endfor %}
-    {% else %}
-    location / {
-            proxy_set_header Host $http_host;
-            proxy_set_header X-Forwarded-Host $host;
-            proxy_set_header X-Forwarded-Server $host;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_pass http://{{ item.upstream_name }};
-    }
-    {% endif %}
-
+    
     {% if item.error_pages is defined and item.error_pages %}
     {%+ for item in item.error_pages -%}
-    error_page {{ item.error_page }}
+        {{ item }}
     {%+ endfor %}
     {% endif %}
 
     {% if item.return is defined and item.return %}
     return {{ item.return }};
-    {% endif %}
-
-    {% if item.extra_parameters is defined and item.extra_parameters %}
-    {{ item.extra_parameters|indent(4) }}
     {% endif %}
     {% endblock %}
 }

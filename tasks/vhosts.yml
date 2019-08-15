@@ -22,25 +22,29 @@
   when: item.state|default('present') != 'absent'
   with_items: "{{ nginx_vhosts }}"
 
-# - name: Add managed vhost config files.
-#   template:
-#     src: "vhost.j2"
-#     dest: "/root/anc"
-#     force: true
-#     owner: root
-#     group: "{{ nginx_root_group }}"
-#     mode: 0644
-#   with_items: "{{ nginx_vhosts }}"
+- name: Add managed proxy config files.
+  template:
+    src: "{{ item.template|default(nginx_proxy_template) }}"
+    dest: "{{ nginx_vhost_path }}/{{ item.filename|default(item.server_name.split(' ')[0] ~ '.conf') }}"
+    owner: root
+    group: "{{ nginx_root_group }}"
+    mode: 0644
+    force: true
+    lstrip_blocks: true
+  when: item.state|default('present') != 'absent'
+  with_items: "{{ nginx_upstreams }}"
 
-# - name: Remove managed vhost config files.
-#   file:
-#     path: "{{ nginx_vhost_path }}/{{ item.filename|default(item.server_name.split(' ')[0] ~ '.conf') }}"
-#     state: absent
-#   when: item.state|default('present') == 'absent'
-#   with_items: "{{ nginx_vhosts }}"
-#   notify: reload nginx
-#   tags:
-#     - skip_ansible_lint
+- name: Remove managed vhost/proxy config files.
+  file:
+    path: "{{ nginx_vhost_path }}/{{ item.filename|default(item.server_name.split(' ')[0] ~ '.conf') }}"
+    state: absent
+  when: item.state|default('present') == 'absent'
+  with_items:
+    - "{{ nginx_vhosts }}"
+    - "{{ nginx_upstreams }}"
+  notify: reload nginx
+  tags:
+    - skip_ansible_lint
 
 # - name: Remove legacy vhosts.conf file.
 #   file:
