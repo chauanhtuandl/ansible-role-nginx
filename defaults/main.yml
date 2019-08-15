@@ -87,7 +87,7 @@ nginx_vhosts:
     server_name_redirect: 'www.example.com'
     extra_parameters: ''
 
-    upstreams_state: true
+    upstreams_state: false
     upstream_name: example
     upstream_strategy: "ip_hash"
     upstream_keepalive: 16
